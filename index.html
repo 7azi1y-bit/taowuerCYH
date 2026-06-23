@@ -27,15 +27,62 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
+        /* 修復檢測相容性問題 1：補上標準的 text-size-adjust */
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
         /* 隱藏滾動條（適用於分類橫向滑動） */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
+        
+        /* 修復檢測相容性問題 2：使用 @supports 包裹 scrollbar-width，避免 Safari 相容性警告 */
+        @supports (scrollbar-width: none) {
+            .no-scrollbar {
+                scrollbar-width: none;
+            }
+        }
+        
         .no-scrollbar {
             -ms-overflow-style: none;
-            scrollbar-width: none;
         }
     </style>
+
+    <script>
+        // 修復檢測無障礙問題 3：自動偵測並為瀏覽器外掛 (如 Phedra) 插入的 iframe 自動補上必要的 title 屬性
+        document.addEventListener("DOMContentLoaded", () => {
+            const fixIframeAccessibility = (node) => {
+                if (node && node.nodeName === 'IFRAME') {
+                    if (!node.hasAttribute('title')) {
+                        const accessibleName = node.getAttribute('id') || node.getAttribute('name') || 'Popup Window';
+                        node.setAttribute('title', accessibleName);
+                    }
+                }
+            };
+
+            // 先針對現有的 iframe 進行掃描
+            document.querySelectorAll('iframe').forEach(fixIframeAccessibility);
+
+            // 監聽後續動態插入的節點（例如使用者點擊外掛按鈕時生成的彈出視窗）
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        fixIframeAccessibility(node);
+                        if (node.querySelectorAll) {
+                            node.querySelectorAll('iframe').forEach(fixIframeAccessibility);
+                        }
+                    });
+                });
+            });
+
+            observer.observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
 </head>
 <body class="bg-[#FDFCFB] text-slate-800 antialiased overflow-x-hidden">
     <!-- React 掛載點 -->
@@ -75,7 +122,7 @@
           {
             title: "場鑄式透水模組",
             subtitle: "Eco-Friendly Permeable Systems",
-            desc: "場鑄式技術解決積水難題，獲得『綠建材標章認證』，實現雨水逕流回收，打造會呼吸的城市鋪面。",
+            desc: "單孔 / 9孔 / 16孔，場鑄式技術解決積水難題，獲得『綠建材標章認證』，實現雨水逕流回收，打造會呼吸的城市鋪面。",
             image: "https://cdn.phototourl.com/uploads/2026-02-25-e1467c7b-e218-4f5f-a987-634d9d8a7016.jpg",
             category: "透水模組",
             tag: "#綠建材認證"
@@ -114,23 +161,23 @@
           }
         ];
 
-        // --- 產品資料庫 (22項完整保留，切勿縮減) ---
+        // --- 產品資料庫 (22項完整保留，切勿縮減，並依照圖面數據大幅精準化規格) ---
         const PRODUCTS_DB = [
           // 1. 透水模組系列
           { 
             id: 'PM-CAST-01', 
-            name: '場鑄式透水模組 (單孔/9孔/16孔)', 
+            name: '排水型透水模組', 
             category: '透水模組', 
             price: 0, 
             unit: 'm²',
-            image: 'https://image2url.com/r2/default/images/1771991549311-78ac0190-cc17-4716-aa2f-e0708c0b0d93.jpg',
+            image: 'https://image2url.com/r2/default/images/1773642122777-e2078589-3bf1-4132-b4be-682c81216c1e.jpg',
             gallery: [
-              'https://image2url.com/r2/default/images/1772010542922-d556e798-4682-41b0-98f0-6d5d72176258.jpg',
-              'https://image2url.com/r2/default/images/1771991828506-37dc979c-8676-44b3-b513-232c82be870e.jpg',
               'https://image2url.com/r2/default/images/1771997177343-a3aefd78-ecd4-4c1f-b48f-95336bfc5e6c.jpg',
-              'https://image2url.com/r2/default/images/1771997374943-c18bc707-9273-4116-8f7e-47a97812a255.jpg'
+              'https://image2url.com/r2/default/images/1771997374943-c18bc707-9273-4116-8f7e-47a97812a255.jpg',
+              'https://image2url.com/r2/default/images/1773625473272-e79f7441-4774-49e3-864c-63f904af0b57.jpg',
+              'https://image2url.com/r2/default/images/1773711273587-ac045a05-67e3-4401-b8f0-8082fc4ae32c.jpg'
             ],
-            description: '高性能現場整體澆置之剛性透水鋪面，具備綠建材認證。除了可作為一般高壓磚基礎外，也可結合壓花/紙模地坪及植草型式，增加鋪面多樣性，並達到雨水逕流回收之功能。', 
+            description: '可作為高壓磚基礎外，也可結合壓花/紙模地坪及植草型式，增加鋪面多樣性，並達到雨水逕流回收之功能。高性能現場整體澆置之剛性透水鋪面，具備綠建材認證。', 
             details: {
               '核心功能': '高性能剛性透水、雨水回收',
               '認證項目': '綠建材標章認證',
@@ -140,10 +187,84 @@
               '特點': '不積水、耐高載重、現場澆置'
             },
             cases: [
-              { location: '台中 榮總', type: '停車場應用', desc: '大面積機車停車場，解決雨天積水濕滑問題。' },
-              { location: '台中 文心森林公園', type: '步道工程', desc: '吸水人行道實測，9秒鐘喝光積水。' }
+              { location: '台中 榮總', type: '機車停車場', desc: '全區排水型透水壓花地坪機車停車場。' },
+              { location: '台中 文心森林公園', type: '步道工程', desc: '透水模組基礎結合高壓磚鋪設。' },
+              { location: '彰化 彰化地檢署', type: '停車場', desc: '排水型透水模組停車場' },
+              { location: '雲林 麥寮', type: '人行道', desc: '排水型透水模組結合高壓磚' }
             ],
             featured: true 
+          },
+          { 
+            id: 'PM-CAST-02', 
+            name: '植草型透水模組', 
+            category: '透水模組', 
+            price: 0, 
+            unit: 'm²',
+            image: 'https://image2url.com/r2/default/images/1772010542922-d556e798-4682-41b0-98f0-6d5d72176258.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1771991746891-a58ba243-6fff-4878-8ecd-e4be91f2ec9f.jpg',
+              'https://image2url.com/r2/default/images/1771991828506-37dc979c-8676-44b3-b513-232c82be870e.jpg'
+            ],
+            description: '透水孔填入沃土及植草，可結合壓花/紙模地坪，並達到雨水逕流回收之功能。高性能現場整體澆置之剛性透水鋪面，具備綠建材認證。', 
+            details: {
+              '核心功能': '高性能剛性透水、雨水回收',
+              '認證項目': '綠建材標章認證',
+              '厚度規格': '10cm / 15cm',
+              '排水孔間距': '15cm(16孔) / 20cm(9孔)',
+              '特點': '不積水、耐高載重、現場澆置'
+            },
+            cases: [
+              { location: '彰化 麥當勞', type: '車道鋪面', desc: '得來速車道，解決雨天積水濕滑問題。' }
+            ],
+            featured: false 
+          },
+          { 
+            id: 'PM-CAST-03', 
+            name: '壓花型透水模組', 
+            category: '透水模組', 
+            price: 0, 
+            unit: 'm²',
+            image: 'https://image2url.com/r2/default/images/1771997828332-8283ee45-7a03-4afc-be0b-94ecb970e2b4.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1771997177343-a3aefd78-ecd4-4c1f-b48f-95336bfc5e6c.jpg',
+              'https://image2url.com/r2/default/images/1772000728757-28db9443-6e8c-4cd0-81f0-5f8827e95104.jpg',
+              'https://image2url.com/r2/default/images/1771998358821-f4153f82-3142-48bc-907f-255a429474ff.jpg',
+              'https://image2url.com/r2/default/images/1773624027540-ccebdf8d-fa9c-46de-a916-81e8012923dd.jpg'
+            ],
+            description: '可結合排水或植草型式，增加鋪面多樣性，並達到雨水逕流回收之功能。高性能現場整體澆置之剛性透水鋪面，具備綠建材認證。', 
+            details: {
+              '核心功能': '高性能剛性透水、雨水回收',
+              '認證項目': '綠建材標章認證',
+              '厚度規格': '10cm / 15cm',
+              '排水孔間距': '60cm / 500cm',
+              '特點': '不積水、耐高載重、現場澆置'
+            },
+            cases: [
+              { location: '台中 榮總', type: '機車停車場', desc: '透水壓花地坪機車停車場。' },
+              { location: '台中 沙鹿公所', type: '廣場地坪', desc: '解決雨天積水濕滑問題。' },
+              { location: '苗栗 通宵神社', type: '行人步道', desc: '區域美化及排水功能。' }
+            ],
+            featured: true 
+          },
+          { 
+            id: 'PM-CAST-04', 
+            name: '紙模型透水模組', 
+            category: '透水模組', 
+            price: 0, 
+            unit: 'm²',
+            image: 'https://image2url.com/r2/default/images/1771998293787-159be0db-fd15-4b20-a6bc-e8ca903f9eaa.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1771998293787-159be0db-fd15-4b20-a6bc-e8ca903f9eaa.jpg'
+            ],
+            description: '高性能現場整體澆置之剛性透水鋪面，具備綠建材認證。可結合排水及植草型式，並達到雨水逕流回收之功能。', 
+            details: {
+              '核心功能': '高性能剛性透水、雨水回收',
+              '認證項目': '綠建材標章認證',
+              '厚度規格': '10cm / 15cm',
+              '排水孔間距': '60cm / 500cm',
+              '特點': '不積水、耐高載重、現場澆置'
+            },
+            featured: false 
           },
           
           // 2. 高壓混凝土磚系列
@@ -158,16 +279,22 @@
               'https://image2url.com/r2/default/images/1772005375812-7a0580fe-3113-4987-b42c-dcef08510a51.jpg',
               'https://image2url.com/r2/default/images/1772007073487-306d9c80-9afe-4c91-a864-bc109d8e30d2.jpg',
               'https://image2url.com/r2/default/images/1772090459496-d23ddfdd-1640-410b-b44a-16be7b92b6f4.jpg',
-              'https://image2url.com/r2/default/images/1772090592060-6d7e458b-ce2d-4709-89ad-c7a2f06481c4.jpg'
+              'https://image2url.com/r2/default/images/1772090592060-6d7e458b-ce2d-4709-89ad-c7a2f06481c4.jpg',
+              'https://image2url.com/r2/default/images/1773626703046-35db0393-185d-44db-9e2c-7b2a1b284a1b.jpg'
             ],
             description: '經典景觀地磚，經高壓成型結構緻密。廣泛應用於人行道與廣場，提供穩固且平整的行走表面。', 
             details: {
               '厚度規格': '6cm/8cm',
               '尺寸規格': '歡迎洽詢',
               '抗壓標準': '達 C 級磚標準',
-              '產品特性': '高強度、耐磨損'
+              '產品特性': '高強度、耐磨損、客製雕刻'
             },
-            featured: false 
+            cases: [
+              { location: '台南 北門', type: '休憩平台', desc: '高壓磚與塊石鋪面搭配石材座椅之親水休憩平台' },
+              { location: '雲林 褒忠參天府', type: '人行道', desc: '人行道鋪設美化及街道家具' },
+              { location: '台東 紅葉村', type: '人行道', desc: '高壓磚鋪面搭配洗石面路緣石及洗石面水溝蓋板' }
+            ],
+            featured: true 
           },
           { 
             id: 'CB-WASH-06', 
@@ -191,7 +318,12 @@
               '表面處理': '天然洗石子面',
               '優點': '極佳止滑效果、色彩自然美觀'
             },
-            featured: true 
+            cases: [
+              { location: '台中 台中教育大學', type: '人行道', desc: '人行道鋪設美化' },
+              { location: '台中 大雅運動公園', type: '人行道廣場', desc: '人行道重新鋪設' },
+              { location: '台中 大新國小', type: '校門廣場', desc: '校門廣場重新鋪設美化' }
+            ],
+            featured: false 
           },
           { 
             id: 'CB-PERM-06', 
@@ -199,7 +331,7 @@
             category: '高壓混凝土磚', 
             price: 0, 
             unit: 'm²',
-            image: 'https://image2url.com/r2/default/images/1772008728678-01afa216-c797-42d6-8725-f15f592322f9.jpg',
+            image: 'https://image2url.com/r2/default/images/1773710527845-d06b5d78-319a-4f47-a67f-e84f4b4920d3.jpg',
             gallery: [
               'https://image2url.com/r2/default/images/1772076638386-8fb47675-2b9a-45e4-8e62-426b56538fea.jpg',
               'https://image2url.com/r2/default/images/1772076741267-bcddfc12-58ce-4b65-a7c6-4d5d19b753bd.jpg',
@@ -216,10 +348,13 @@
               '造型種類': 'S型 / 圓型 / 三角型 / 梯型 / 長條型',
               '環保貢獻': '減少地面逕流、地下水補注'
             },
+            cases: [
+              { location: '台中 教育大學 ', type: '通學步道/廣場', desc: '通學步道廣場美化，透水模組結合界石及高壓混凝土透水磚' }
+            ],
             featured: false 
           },
 
-          // 3. 路緣石/界石系列
+          // 3. 路緣石/界石系列 (依照您上傳的 41b2fb、41b2dc、41b2bd 規格圖完全精準重構)
           { 
             id: 'CSW', 
             name: '卡榫路緣石 (平板面/洗石面/彩雲面)', 
@@ -235,14 +370,20 @@
               'https://image2url.com/r2/default/images/1772088978710-5e823cd9-d459-4824-b3e0-629a7e137d50.jpg',
               'https://image2url.com/r2/default/images/1772089510546-d2d303f0-adea-466e-87b8-f83d7a83b8a6.jpg'
             ],
-            description: '具備凹凸互鎖之卡榫設計，大幅提升施工時的對齊穩定度。提供多種面材選擇，完美適配各種道路與人行道邊界。', 
+            description: '具備凹凸互鎖之剛性卡榫對齊設計，大幅提升施工排置之連續平直與穩定度，不易產生位移。路緣尺寸可依需求討論開模客製化，適合不同路面收邊情境。', 
             details: {
-              '可選面材': '平板面、洗石面、彩雲面(可客製化)',
-              '產品特性': '卡榫設計、高抗壓強度',
-              '施工優勢': '接縫平整、不易位移',
-              '適用範圍': '車道邊界、人行道收邊'
+              '外觀規格': '寬度 15cm x 高度 H x 長度 L (可隨案量身開模客製尺寸)',
+              '表面飾面': '洗石面(黃色或黑白色)、彩雲面、平板面',
+              '結構設計': '凸出式鎖接卡榫 (接縫緊密)',
+              '施工優勢': '高強度抗壓、耐震防位移、接縫對齊平整',
+              '適用範圍': '車道邊界引導、人行道收邊、圓弧路角收邊'
             },
-            featured: false 
+            cases: [
+              { location: '雲林 褒忠參天府', type: '人行道', desc: '人行道鋪設美化及廣場鋪面' },
+              { location: '台中 東勢客家文化園區', type: '廣場鋪面', desc: '搭配高壓磚之人行道鋪設美化及廣場鋪面' },
+              { location: '台東 紅葉村', type: '人行道', desc: '高壓磚鋪面搭配洗石面路緣石及洗石面水溝蓋板' }
+            ],
+            featured: true 
           },
           { 
             id: 'CPK', 
@@ -258,13 +399,17 @@
               'https://image2url.com/r2/default/images/1772001645699-385814f5-b0dd-4a37-936d-039956452b8e.png',
               'https://image2url.com/r2/default/images/1772091954329-e3d86efa-71f7-4935-a47a-3daf4f1fa2df.jpg'
             ],
-            description: '專為導引動線與排水需求設計，斜面結構美觀大方。排水型式可有效減少路面逕流，強化排水效能。', 
+            description: '具備安全斜切角設計，能提供緩衝防護與安全引導，並支援預鑄嵌入式不銹鋼排水孔柵，可有效引流路面逕流以防止路側積水。', 
             details: {
-              '可選面材': '彩雲面、洗石面',
-              '功能型式': '標準斜面型、排水型',
-              '結構特點': '坡度設計、一體成型',
+              '外觀規格': '頂寬 15cm x 底寬 20.5cm x 高度 H x 長度 L (可量身開模客製)',
+              '表面飾面': '洗石面、彩雲面、平板面、洗石面(飾帶樣式)',
+              '結構設計': '底部配有圓弧排水孔道或嵌入不銹鋼集水網格',
+              '功能特點': '引導行車動線安全、防止車胎擦碰、高承載耐候性'
             },
-            featured: true 
+            cases: [
+              { location: '竹南 瓶頸路段', type: '人行道', desc: '人行道鋪設搭配高壓磚' }
+            ],
+            featured: false 
           },
           { 
             id: 'CSP', 
@@ -284,14 +429,17 @@
               'https://image2url.com/r2/default/images/1772003332816-40cce86c-bffb-43d6-b933-e646d06e1f3a.png',
               'https://image2url.com/r2/default/images/1772003496723-fe5f8abb-66a8-44af-a903-3e11b0f44c71.jpg'
             ],
-            description: '極致豐富的面材表現，包括細緻的洗石面條紋與菱形、具層次感的洞石面與仿石面，滿足高階景觀案場的設計要求。', 
+            description: '面層工藝極致豐富，提供包括洗石直條、洗石菱形、仿石直條、仿石菱形及具備多層次質感的自然洞石面與彩雲面。尺寸支持依照需求開模客製化。', 
             details: {
-              '洗石面樣式': '直條、菱形',
-              '藝術面材': '洞石面、仿石面、彩雲面',
-              '仿石細分': '直條、菱形',
-              '美學特點': '紋理細膩、質感沉穩',
-              '適用範圍': '花台分界、景觀步道區隔'
+              '標準外觀': '寬度 15cm x 高度 8 或 15cm x 長度 50cm (可配合圖面開模客製)',
+              '表面飾面': '洗石面(直條/菱形)、彩雲面、洞石面、仿石面(直條/菱形/岩板紋)',
+              '視覺美學': '模擬天然粗糙雕鑿面，結合精緻研磨，色調勻稱，層次豐富',
+              '主要應用': '景觀綠帶分界、人行道人流引導、花台邊界區隔'
             },
+            cases: [
+              { location: '苗栗 通宵神社', type: '休閒步道', desc: '透水壓花地坪搭配界石及手工創作圖騰牆面美化' },
+              { location: '桃園 永安漁港', type: '漁市廣場', desc: '觀光漁市廣場美化，彩色砂圖騰地坪結合界石及高壓磚' }
+            ],
             featured: false 
           },
           { 
@@ -308,13 +456,19 @@
               'https://image2url.com/r2/default/images/1772003835267-9e2b8afd-fba6-4b53-ae91-a27f52c3dbdc.png',
               'https://image2url.com/r2/default/images/1772003990783-c4d58de0-eb76-4a54-a609-a4b90950da81.png'
             ],
-            description: '表面呈現經典繩編交叉紋理，賦予冰冷的混凝土石材手工編織般的溫度。是近年來創意景觀工程的熱門選擇。', 
+            description: '表面呈現經典立體繩編交叉交叉互扣紋理，或高逼真仿天然木質年輪與深淺木紋。在極度耐候的預鑄鋼筋混凝土材質上，展現溫潤與自然的景觀生命力。', 
             details: {
-              '可選顏色': '黑白色、黃色',
-              '特殊面材': '仿木紋、彩雲面、洞石面',
-              '視覺特點': '曲線繩紋質感',
-              '適用範圍': '花台分界、步道區隔'
+              '標準繩編規格': '長度 60cm x 寬度 10cm x 高度 8cm (互鎖型接縫設計)',
+              '仿木紋規格': '長度 56cm x 寬度 18cm x 高度 8cm (擬真天然枕木段結構)',
+              '可選面層': '繩編(黑白/黃色/彩雲面/洞石面)、仿木紋(實木炭色)',
+              '產品特性': '高仿真木質年輪與交織繩編、高耐候不龜裂不吸水、防蟲蛀',
+              '適用範圍': '庭園花台收邊、休閒步道路緣引導、綠美化花帶隔離'
             },
+            cases: [
+              { location: '台中 光榮國中', type: '通學步道', desc: '高壓磚結合繩編界石' },
+              { location: '台中 十四張圳公園', type: '休閒步道', desc: '高壓磚結合繩編界石' },
+              { location: '彰化 埤頭', type: '休閒廣場/停車場', desc: '高壓磚結合繩編界石鋪面' }
+            ],
             featured: false 
           },
 
@@ -338,6 +492,13 @@
               '材質特性': '客製化圖案',
               '視覺效果': '可結合抿石子/彩色砂/陶雕設計',
             },
+            cases: [
+              { location: '台中 南寮步道', type: '入口意象', desc: '手工創作圖騰搭配塑木格柵' },
+              { location: '台中 苑裡漁港', type: '釣魚平台新建', desc: '釣魚平台新建彩色砂圖騰結合抿石子及手工創作圖騰設計' },
+              { location: '嘉義 布袋菜舖里', type: '司令台牆面美化', desc: '手工創作圖騰結合陶雕設計美化' },
+              { location: '嘉義 竹崎鄉', type: '護坡牆面', desc: '石棹社區護坡牆面手工創作圖騰結合抿石子設計' },
+              { location: '苗栗 通宵神社', type: '休閒步道', desc: '透水壓花地坪搭配界石及手工創作圖騰牆面美化' }
+            ],
             featured: true 
           },
           { 
@@ -361,6 +522,14 @@
               '材質特性': '客製化圖案',
               '視覺效果': '可結合抿石子/手工創作圖騰/陶雕設計',
             },
+            cases: [
+              { location: '嘉義 竹崎鄉灣橋村', type: '道路牆面', desc: '道路牆面、護坡牆面美化設計' },
+              { location: '台中 十四張圳公園', type: '休閒步道', desc: '高壓磚鋪面及繩編界石搭配彩色砂圖騰地坪設計' },
+              { location: '彰化 鹿港', type: '廣場地坪', desc: '廣場中心搭配彩色砂圖騰地坪設計' },
+              { location: '桃園 大園砲陣地運動公園', type: '停車場/公園廣場', desc: '高壓磚鋪面及繩編界石搭配彩色砂圖騰地坪設計' },
+              { location: '桃園 永安漁港', type: '漁市廣場', desc: '觀光漁市廣場美化，彩色砂圖騰牆面/地坪結合界石及高壓磚' },
+              { location: '桃園 角板山', type: '矮牆美化', desc: '角板山形象商圈彩色砂圖騰牆面美化' }
+            ],
             featured: true 
           },
 
@@ -371,18 +540,22 @@
             category: '壓花地坪/紙模地坪', 
             price: 0, 
             unit: 'm²',
-            image: 'https://image2url.com/r2/default/images/1771997828332-8283ee45-7a03-4afc-be0b-94ecb970e2b4.jpg',
+            image: 'https://image2url.com/r2/default/images/1773628709412-52b6d8ae-c17a-4477-aa7c-6e06f5059f74.jpg',
             gallery: [
-              'https://image2url.com/r2/default/images/1771998358821-f4153f82-3142-48bc-907f-255a429474ff.jpg',
+              'https://image2url.com/r2/default/images/1771997828332-8283ee45-7a03-4afc-be0b-94ecb970e2b4.jpg',
               'https://image2url.com/r2/default/images/1771998293787-159be0db-fd15-4b20-a6bc-e8ca903f9eaa.jpg',
               'https://image2url.com/r2/default/images/1771997374943-c18bc707-9273-4116-8f7e-47a97812a255.jpg',
-              'https://image2url.com/r2/default/images/1772010542922-d556e798-4682-41b0-98f0-6d5d72176258.jpg'
+              'https://image2url.com/r2/default/images/1771998358821-f4153f82-3142-48bc-907f-255a429474ff.jpg'
             ],
             description: '可結合場鑄式透水模組，解決傳統壓花地坪不透水的痛點，保留美觀同時兼顧環保排水。', 
             details: {
               '工法類型': '壓花地坪 / 紙模地坪',
-              '配合設計': '*可結合透水模組施作*'
+              '配合設計': '可結合透水模組施作'
             },
+            cases: [
+              { location: '雲林 褒忠參天府', type: '人行道及廣場', desc: '人行道鋪設美化及廣場鋪面' },
+              { location: '苗栗 通宵神社', type: '休閒步道', desc: '透水壓花地坪搭配界石及手工創作圖騰牆面美化' }
+            ],
             featured: false 
           },
 
@@ -393,9 +566,18 @@
             category: '牆磚系列', 
             price: 0, 
             unit: 'm²',
-            image: 'https://image2url.com/r2/default/images/1771997828332-8283ee45-7a03-4afc-be0b-94ecb970e2b4.jpg',
+            image: 'https://image2url.com/r2/default/images/1772587023989-e1244d01-6cfb-48e2-b349-ce2fde69297d.jpg',
             gallery: [
-              'https://image2url.com/r2/default/images/1771998358821-f4153f82-3142-48bc-907f-255a429474ff.jpg'
+              'https://image2url.com/r2/default/images/1772590853725-eb999d3b-5f1c-4a4d-81bb-ad1ed9876a99.jpg',
+              'https://image2url.com/r2/default/images/1772590877585-81017f9c-e234-4485-a91e-1546711c31fd.jpg',
+              'https://image2url.com/r2/default/images/1772590897449-c6d00460-e8e0-4728-bf63-4c8b67845f22.jpg',
+              'https://image2url.com/r2/default/images/1772590916325-96484789-6218-479a-bc91-3f51e6d07c35.jpg',
+              'https://image2url.com/r2/default/images/1772590936698-2bcd322f-eed4-4e06-a83b-52292e3e7f27.jpg',
+              'https://image2url.com/r2/default/images/1772590972466-40d88254-a9d7-488a-bbec-76c51f9b4600.jpg',
+              'https://image2url.com/r2/default/images/1772591252263-54de6d29-1ca2-4bc1-b921-ba8ccdaf550d.jpg',
+              'https://image2url.com/r2/default/images/1772591171190-2e59678b-4455-4848-a0d9-f55cf7b04f76.jpg',
+              'https://image2url.com/r2/default/images/1772591096553-542c790b-cd57-4966-8894-348f346721bc.jpg',
+              'https://image2url.com/r2/default/images/1772591071984-e638abc9-751c-43e6-8204-c4b6cf658e96.jpg'
             ],
             description: '具備自然石材紋理的高強度裝飾牆磚，採用先進模具技術還原岩石粗獷觸感。質地相比石材更為輕巧，大幅降低牆面載重需求。', 
             details: {
@@ -405,8 +587,10 @@
               '適用範圍': '建築裙樓、圍牆外飾、花台立面裝飾'
             },
             cases: [
-              { location: '台中 榮總', type: '牆面裝飾', desc: '採用深灰色岩面磚增加景觀層次感。' }
+              { location: '台中 龍井鯉魚山公園', type: '步道花台', desc: '園區步道綠帶花台' },
+              { location: '桃園 角板山', type: '步道花台', desc: '角板山形象商圈步道綠帶花台' }
             ],
+            featured: false
           },
           {
             id: 'M',
@@ -427,22 +611,25 @@
               'https://image2url.com/r2/default/images/1772523005281-be18284c-6ff5-42fd-ad82-9333e401bc98.jpg',
               'https://image2url.com/r2/default/images/1772523028561-380e8b36-1e2d-4299-b122-84fb77a39cae.jpg'
             ],
-            description: '質地相比石材更為輕巧，大幅降低牆面載重需求並增加視覺通透性。', 
+            description: '質地相比石材更為輕巧，大幅降低牆面載重需求並增加視覺通透性項。', 
             details: {
-              '結構材質': '水泥、花崗石 / 大理石粒料',
+              '結構材質': '水泥、天然石材粒料',
               '表面處理': '仿天然石材平光面',
               '造型種類': '方型 / 圓形 / 水滴',
               '適用範圍': '圍牆裝飾磚、屏風牆面'
             },
             cases: [
-              { location: '台中 榮總', type: '牆面裝飾', desc: '採用深灰色岩面磚增加景觀層次感。' }
+              { location: '台中 大雅員林村', type: '公園廣場圍牆', desc: '廣場圍牆結合透空磚設計' },
+              { location: '雲林 利眾公廟', type: '廣場圍牆', desc: '廣場圍牆結合透空磚設計' },
+              { location: '台中 瓦瑤橋', type: '人行道圍欄', desc: '人行道圍欄美化設計' }
             ],
+            featured: false
           },
 
           // 7. 欄杆系列
           {
-            id: 'HR',
-            name: '造型欄杆',
+            id: 'HR-1',
+            name: '仿木欄杆',
             category: '欄杆系列', 
             price: 0, 
             unit: 'm',
@@ -450,10 +637,7 @@
             gallery: [
               'https://image2url.com/r2/default/images/1772416320206-ee35df4a-d6b0-4ca9-8f4e-7ab5425712e1.jpg',
               'https://image2url.com/r2/default/images/1772423075099-75caea81-7f7d-4d9f-89de-2c0d38d0d7f9.jpg',
-              'https://image2url.com/r2/default/images/1772432289226-b1ab8955-7f51-4e5a-8fe5-a63058b9116c.jpg',
-              'https://image2url.com/r2/default/images/1772416235396-e2987db1-324d-4421-a0bf-46410665b088.jpg',
-              'https://image2url.com/r2/default/images/1772416192433-cef31985-b87d-4e22-8530-b9adaefbb100.jpg',
-              'https://image2url.com/r2/default/images/1772432240389-798850cd-e778-4119-8577-8f545af4766c.jpg'
+              'https://image2url.com/r2/default/images/1772432289226-b1ab8955-7f51-4e5a-8fe5-a63058b9116c.jpg'
             ],
             description: '以混凝土結合鋼筋骨架，表面經由手工擬真石紋/木紋。解決了實木在戶外環境下容易龜裂、腐爛、生白蟻的困擾。', 
             details: {
@@ -461,32 +645,162 @@
               '色彩選擇': '可客製選擇搭配 (洗石面 / 岩面 / 仿木紋)',
               '造型種類': '雙橫桿 / 三橫桿 / 直立桿 / 鋼索',
               '適用範圍': '河道護欄、步道欄杆、公園休憩區區隔'
-            }
+            },
+            cases: [
+              { location: '台東 南島大道', type: '人行道', desc: '田間人行道結合高壓磚鋪面' },
+              { location: '台中 十四張圳公園', type: '休閒步道', desc: '高壓磚、界石及街道家具結合欄杆之親水步道' },
+              { location: '台中 后里派出所', type: '人行道', desc: '結合高壓磚鋪面' },
+              { location: '台南 北門', type: '休憩平台', desc: '高壓磚與塊石鋪面搭配石材座椅之親水休憩平台' }
+            ],
+            featured: false
           },
-          
+          {
+            id: 'HR-2',
+            name: '洗石欄杆',
+            category: '欄杆系列', 
+            price: 0, 
+            unit: 'm',
+            image: 'https://image2url.com/r2/default/images/1772612640202-6a4961d7-e6d1-4b94-b19a-ad45b304aeda.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1772416235396-e2987db1-324d-4421-a0bf-46410665b088.jpg',
+              'https://image2url.com/r2/default/images/1772416192433-cef31985-b87d-4e22-8530-b9adaefbb100.jpg',
+              'https://image2url.com/r2/default/images/1772432240389-798850cd-e778-4119-8577-8f545af4766c.jpg'
+            ],
+            description: '以混凝土結合鋼筋骨架，表面為洗石子。', 
+            details: {
+              '結構材質': '鋼筋混凝土(預鑄成型)',
+              '色彩選擇': '可客製選擇搭配 (洗石面 / 岩面 / 仿木紋)',
+              '造型種類': '雙橫桿 / 三橫桿 / 直立桿',
+              '適用範圍': '河道護欄、步道欄杆、公園休憩區區隔'
+            },
+            cases: [
+              { location: '台中 龍井鯉魚山公園', type: '防護坡', desc: '防護坡洗石欄杆' },
+              { location: '雲林 土庫道路', type: '道路欄杆', desc: '田間道路欄杆' },
+              { location: '苗栗 龍鳳漁港', type: '防波堤平台', desc: '壓花地坪結合洗石欄杆之防波堤平台' },
+              { location: '新竹 清泉風景特區', type: '休憩平台', desc: '河岸塑木休憩平台結合洗石欄杆' }
+            ],
+            featured: true
+          },
           // 8. 塑木系列
           {
-            id: 'WD',
-            name: '塑木系列',
+            id: 'WD-1',
+            name: '欄杆',
             category: '塑木系列', 
             price: 0, 
             unit: 'm',
-            image: 'https://image2url.com/r2/default/images/1772428930456-1eef0b77-54d2-44b3-a70c-942fa352bf46.jpg',
+            image: 'https://image2url.com/r2/default/images/1772416152158-15f5dc7f-f1b9-4657-8e0a-1c9fa7950db5.jpg',
             gallery: [
-              'https://image2url.com/r2/default/images/1772429141883-e83e2794-70f3-49f8-aae3-0abf3bdd0209.jpg',
-              'https://image2url.com/r2/default/images/1772428970266-54a53cf2-acbc-4c05-b11b-4c3b17d2f39c.jpg',
-              'https://image2url.com/r2/default/images/1772431178783-62117ba0-4933-4766-8b90-3b2766d0b42a.jpg',
-              'https://image2url.com/r2/default/images/1772429003396-5d2f0dc8-c0fb-43d7-bd54-950ff7202beb.jpg',
-              'https://image2url.com/r2/default/images/1772429477567-6547509e-7a48-436d-a8da-cba867a1d55f.jpg',
-              'https://image2url.com/r2/default/images/1772430359216-30cd4500-c0e4-416f-a1f9-3b85a3822253.jpg'
+              'https://image2url.com/r2/default/images/1773621379941-de54af20-9f6b-4d2b-8aea-8224c9c540b2.jpg',
+              'https://image2url.com/r2/default/images/1773301370734-f07c0bb9-d212-4a1d-9be5-31d0f5bb2564.jpg'
             ],
             description: '經複合工藝擠壓成型搭配鋁型材骨架進行扣合安裝。具備木材溫潤視覺與觸感，同時擁有塑料的強大耐候性。適合打造溫馨、自然的半戶外休憩環境。', 
             details: {
-              '材質成分': '聚氯乙烯 (PVC) + 木分子 + 纖維材料',
+              '材質成分': '聚氯乙烯 (PVC) + ASA  + 木分子 + 纖維材料',
               '性能優點': '防霉防水、抗白蟻、不需定期刷漆油保養',
               '色彩選擇': '實木色',
               '配合設計': '可作景觀花架、涼亭頂部格柵、造型格柵、指標牌等'
-            }
+            },
+            cases: [
+              { location: '台南 鯽魚橋', type: '步道欄杆', desc: '親水步道欄杆' },
+              { location: '南投 永山宮', type: '觀景平台', desc: '塑木觀景平台結合塑木欄杆及座椅' }
+            ],
+            featured: false
+          },
+          {
+            id: 'WD-2',
+            name: '花架',
+            category: '塑木系列', 
+            price: 0, 
+            unit: '座',
+            image: 'https://image2url.com/r2/default/images/1772428930456-1eef0b77-54d2-44b3-a70c-942fa352bf46.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1772429141883-e83e2794-70f3-49f8-aae3-0abf3bdd0209.jpg',
+              'https://image2url.com/r2/default/images/1772431178783-62117ba0-4933-4766-8b90-3b2766d0b42a.jpg'
+            ],
+            description: '經複合工藝擠壓成型搭配鋁型材骨架進行扣合安裝。具備木材溫潤視覺與觸感，同時擁有塑料的強大耐候性。適合打造溫馨、自然的半戶外休憩環境。', 
+            details: {
+              '材質成分': '聚氯乙烯 (PVC) + ASA  + 木分子 + 纖維材料',
+              '性能優點': '防霉防水、抗白蟻、不需定期刷漆油保養',
+              '色彩選擇': '實木色',
+              '配合設計': '可作景觀花架、涼亭頂部格柵、造型格柵、指標牌等'
+            },
+            cases: [
+              { location: '台南 鯽魚橋', type: '休憩平台', desc: '步道休憩平台塑木花架' }
+            ],
+            featured: false
+          },
+          {
+            id: 'WD-3',
+            name: '地板',
+            category: '塑木系列', 
+            price: 0, 
+            unit: 'm²',
+            image: 'https://image2url.com/r2/default/images/1773306151234-5b991148-9c59-46f2-84af-b22a7334e7eb.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1773622033811-cf449323-2444-4de2-98ab-f8b1c8b07485.jpg',
+              'https://image2url.com/r2/default/images/1773622063831-d129a251-4921-4839-982f-fb7e1dd57582.jpg'
+            ],
+            description: '經複合工藝擠壓成型搭配鋁型材骨架進行扣合安裝。具備木材溫潤視覺與觸感，同時擁有塑料的強大耐候性。適合打造溫馨、自然的半戶外休憩環境。', 
+            details: {
+              '材質成分': '聚氯乙烯 (PVC) + ASA  + 木分子 + 纖維材料',
+              '性能優點': '防霉防水、抗白蟻、不需定期刷漆油保養',
+              '色彩選擇': '實木色',
+              '配合設計': '可作景觀花架、涼亭頂部格柵、造型格柵、指標牌等'
+            },
+            cases: [
+              { location: '南投 永山宮', type: '觀景平台', desc: '塑木觀景平台結合塑木欄杆及座椅' }
+            ],
+            featured: false
+          },
+          {
+            id: 'WD-4',
+            name: '格柵',
+            category: '塑木系列', 
+            price: 0, 
+            unit: 'm',
+            image: 'https://image2url.com/r2/default/images/1772430359216-30cd4500-c0e4-416f-a1f9-3b85a3822253.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1773621637830-15e9805f-b137-4362-a72b-c8c4a7823195.jpg',
+              'https://image2url.com/r2/default/images/1773621674524-e51d1b7a-9283-4616-9730-b778fadf6766.jpg',
+              'https://image2url.com/r2/default/images/1773621784668-64625987-e88b-41b5-8266-19db9b1eefef.jpg'
+            ],
+            description: '經複合工藝擠壓成型搭配鋁型材骨架進行扣合安裝。具備木材溫潤視覺與觸感，同時擁有塑料的強大耐候性。適合打造溫馨、自然的半戶外休憩環境。', 
+            details: {
+              '材質成分': '聚氯乙烯 (PVC) + ASA + 木分子 + 纖維材料',
+              '性能優點': '防霉防水、抗白蟻、不需定期刷漆油保養',
+              '色彩選擇': '實木色',
+              '配合設計': '可作景觀花架、涼亭頂部格柵、造型格柵、指標牌等'
+            },
+            cases: [
+              { location: '苗栗 山腳國小', type: '圍牆格柵', desc: '校園圍牆結合塑木格柵設計' },
+              { location: '桃園 角板山', type: '入口意象', desc: '角板山形象商圈入口意象塑木格柵結合彩色砂圖騰牆面' }
+            ],
+            featured: true
+          },
+          {
+            id: 'WD-5',
+            name: '涼亭',
+            category: '塑木系列', 
+            price: 0, 
+            unit: '座',
+            image: 'https://image2url.com/r2/default/images/1772429003396-5d2f0dc8-c0fb-43d7-bd54-950ff7202beb.jpg',
+            gallery: [
+              'https://image2url.com/r2/default/images/1772428970266-54a53cf2-acbc-4c05-b11b-4c3b17d2f39c.jpg',
+              'https://image2url.com/r2/default/images/1773621520085-3f3dd330-aba3-4983-8d5e-5209f76e44e6.jpg',
+              'https://image2url.com/r2/default/images/1773621559080-d09edc9b-e1c5-4164-b8bc-eea36346ca94.jpg'
+            ],
+            description: '經複合工藝擠壓成型搭配鋁型材骨架進行扣合安裝。具備木材溫潤視覺與觸感，同時擁有塑料的強大耐候性。適合打造溫馨、自然的半戶外休憩環境。', 
+            details: {
+              '材質成分': '聚氯乙烯 (PVC) + ASA  + 木分子 + 纖維材料',
+              '性能優點': '防霉防水、抗白蟻、不需定期刷漆油保養',
+              '色彩選擇': '實木色',
+              '配合設計': '可作景觀花架、涼亭頂部格柵、造型格柵、指標牌等'
+            },
+            cases: [
+              { location: '嘉義 梅山鄉太興村', type: '休憩涼亭', desc: '廣場休憩涼亭' },
+              { location: '苗栗 三義茶油', type: '休憩空間', desc: '廣場休憩空間塑木涼亭' }
+            ],
+            featured: false
           },
 
           // 9. 其他
@@ -509,7 +823,15 @@
               '設計風格': '細鑿面、平滑拋光面',
               '耐用度': '高承重、抗撞擊、全天候環境適用',
               '色彩選擇': '椅腳可客製化顏色'
-            }
+            },
+            cases: [
+              { location: '雲林 褒忠參天府', type: '人行道及廣場', desc: '人行道鋪設美化及廣場鋪面' },
+              { location: '大同國小', type: '休憩涼亭', desc: '塑木花架搭配繩編界石及石材座椅' },
+              { location: '台中 大雅運動公園', type: '休閒步道', desc: '塑木花架搭配高壓洗石子磚、繩編界石及石材座椅' },
+              { location: '雲林 泰安宮', type: '休憇涼亭', desc: '塑木花架搭配高壓洗石子磚及石材座椅' },
+              { location: '台南 北門', type: '休憩平台', desc: '高壓磚與塊石鋪面搭配石材座椅之親水休憩平台' }
+            ],
+            featured: false
           },
           {
             id: 'STOP',
@@ -526,9 +848,14 @@
             ],
             description: '為城市行人空間開發的街道家具。提供穩重極具設計感的行人設施。人工打鑿工法，呈現純粹的材質美感。', 
             details: {
-              '主要材質': '鋼筋水泥、天然石材碎粒、人造鵝卵石',
+              '主要材質': '鋼筋水泥、天然石材粒料、人造鵝卵石',
               '設計風格': '崗晶石面、細鑿面',
-            }   
+            },
+            cases: [
+              { location: '屏東 潮州', type: '停車場出入口', desc: '車道出入口與行人區隔設置' },
+              { location: '台中 十四張圳公園', type: '休閒步道出入口', desc: '車道與行人區隔設置' }
+            ],
+            featured: false   
           },
           {
             id: 'PARK',
@@ -548,7 +875,11 @@
               '主要材質': '水泥、天然鵝卵石',
               '設計風格': '洗石面(黃 / 黑白)',
               '色彩選擇': '可客製面材',
-            }   
+            },
+            cases: [
+              { location: '桃園 大園砲陣地運動公園', type: '停車場', desc: '停車格輪擋' }
+            ],
+            featured: false   
           },
           {
             id: 'WO',
@@ -564,9 +895,10 @@
             ],
             description: '仿天然枕木紋路質感及色澤，是景觀步道的理想選擇。提供穩定、防滑且具備視覺層次的材質表面。', 
             details: {
-              '主要材質': '水泥、石英砂、天然大理石 / 花崗石碎石',
-              '設計風格': '仿天然木質紋',
-            }   
+              '主要材質': '水泥、石英砂、天然石材粒料',
+              '設計風格': '洗石面(黃 / 黑白)',
+            },
+            featured: false   
           },
           {
             id: 'PNCS',
@@ -590,12 +922,18 @@
               '認證項目': '護坡磚環保標章',
               '主要材質': '鋼筋水泥、天然大理石 / 花崗石碎石',
               '設計風格': '粗礦岩面質感 (直紋 / 圓弧)',
-            }   
+            },
+            cases: [
+              { location: '台中 龍井鯉魚山公園', type: '防護坡', desc: '園區步道防護坡' },
+              { location: '苗栗 卓蘭', type: '登山步道', desc: '登山步道防護坡' },
+              { location: '彰化 下茄荖', type: '灌溉渠道', desc: '灌溉渠道邊坡擋土磚' }
+            ],
+            featured: false   
           },
           {
             id: 'GAP',
             name: '溝蓋板',
-            category: '其他', 
+            category: '溝蓋板', 
             price: 0, 
             unit: '組',
             image: 'https://image2url.com/r2/default/images/1772516940817-f65c3a35-941c-43a4-8303-98b55a0aab91.jpg',
@@ -615,14 +953,18 @@
               'https://image2url.com/r2/default/images/1772518710586-00251ba8-1623-4795-be98-36af43aaa0fa.jpg',
               'https://image2url.com/r2/default/images/1772518739040-c50da839-2345-4f18-b814-cd446efe85f4.jpg'
             ],
-            description: '一體成型的高規格排水溝蓋系統。具備高承重結構與防滑紋理，能確保行人與車輛通行的安全，並融入周邊景觀。', 
+            description: '預鑄鋼筋混凝土結合精選洗石面材，水洗去水泥附著，外露天然石礫質感。適合車行與人行通道之安全排水蓋。', 
             details: {
-              '色彩選擇': '黑 / 黃 (可客製面材及文字)',
-              '主要材質': '預鑄鋼筋水泥、防滑洗石面材',
-              '規格特色': '孔洞緊密不易卡鞋跟、超高排水效能',
-            }   
+              '色彩選擇': '黑 / 黃 (可客製面材與文字)',
+              '主要材質': '高強度預鑄鋼筋水泥、防滑石材骨材',
+              '設計風格': '洗石面 / 崗晶石面'
+            },
+            cases: [
+              { location: '苗栗 蕉埔國小', type: '通學步道', desc: '高壓磚通學步道搭配客製鍍鋅溝蓋板及洗石排水磚' },
+              { location: '台東 紅葉村', type: '人行道', desc: '高壓磚鋪面搭配洗石面路緣石及洗石面水溝蓋板' }
+            ],
+            featured: false   
           },
-          
           // 10. 客製化藝術陶雕
           {
             id: 'CR',
@@ -644,7 +986,14 @@
               '耐候特性': '不褪色、耐磨 / 耐刮',
               '配合設計': '可結合抿石子/手工創作圖騰/彩色砂圖騰進行多材質異適設計',
               '適用範圍': '文化牆、入口標誌牆、景觀地標設施'
-            }
+            },
+            cases: [
+              { location: '苗栗 三義勝興', type: '休閒步道', desc: '塑木平台步道欄杆結合陶雕設計' },
+              { location: '嘉義 布袋菜舖里', type: '司令台牆面美化', desc: '手工創作圖騰結合陶雕設計美化' },
+              { location: '苗栗 三灣', type: '防坡牆美化', desc: '抿石子結合陶雕設計美化' },
+              { location: '苗栗 山柑社區', type: '牆面美化', desc: '社區活動中心' }
+            ],
+            featured: true
           }
         ];
 
